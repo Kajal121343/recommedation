@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Recommendation System</title>
+    <style>
+        body {
+            background-image: url('images (2).jfif'); 
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #dcdcdc; 
+        }
+        .container {
+            text-align: center;
+            margin: 20px;
+            position: relative; 
+            z-index: 10;
+        }
+        h1, h2 {
+            color: #800080; 
+        }
+        .movie-box {
+            width: 200px;
+            background-color: rgba(51, 51, 51, 0.8); 
+            color: #dcdcdc; 
+            text-align: center;
+            padding: 10px;
+            margin: 10px;
+            display: inline-block;
+            vertical-align: top;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .movie-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.8);
+        }
+        .movie-box img {
+            max-width: 100%;
+            height: auto;
+            border-bottom: 1px solid #444;
+        }
+        .movie-box h3 {
+            margin: 10px 0;
+            color: #800080; 
+        }
+        .submit_btn {
+            background-color: #444;
+            color: white;
+            padding: 0.5rem 1rem;
+            margin-top: 1rem;
+            cursor: pointer;
+            display: inline-block;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .submit_btn:hover {
+            background-color: #666;
+        }
+        #movies {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .movie-detail {
+            display: none;
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 800px;
+            background-color: rgba(34, 34, 34, 0.9);
+            color: #dcdcdc; 
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            transition: opacity 0.3s;
+            overflow: hidden;
+            max-height: 80vh; 
+            overflow-y: auto; 
+        }
+        .movie-detail.show {
+            display: block;
+            opacity: 1;
+        }
+        .movie-detail.hide {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .movie-detail button {
+            background-color: #444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .movie-detail button:hover {
+            background-color: #666;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #444;
+            color: white;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .close-btn:hover {
+            background-color: #666;
+        }
+        .movie-detail-content {
+            display: flex;
+            align-items: center;
+            text-align: left;
+        }
+        .movie-detail-content img {
+            max-width: 200px; 
+            height: auto;
+            margin-right: 20px;
+            border-radius: 8px;
+        }
+        .movie-detail-content div {
+            flex: 1;
+        }
+        .movie-detail-content h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #800080;
+        }
+        .movie-detail-content p {
+            margin: 5px 0;
+            color: #dcdcdc; 
+        }
+        .movie-detail-content p strong {
+            color: #000; 
+        }
+        .form-label {
+            color: #800080; 
+            font-size: 1rem; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Movie Recommendation System</h1>
+        <form>
+            <div><span class="form-label">Movie Title:</span> <input type="text" id="movieInput"></div>
+            <div class="submit_btn" onclick="GetMovies()">Get Recommendations</div>
+            <h2 id="movieName"></h2>
+        </form>
+        <div id="movies"></div>
+        <div id="movieDetail" class="movie-detail">
+            <button class="close-btn" onclick="closeDetail()">X</button>
+            <div id="movieDetailContent" class="movie-detail-content"></div>
+        </div>
+    </div>
+
+    <script>
+        function GetMovies() {
+            const movieTitle = document.getElementById('movieInput').value;
+            const movieName = document.getElementById('movieName');
+            movieName.innerHTML = "__" + movieTitle + "__";
+
+            fetch('http://www.omdbapi.com/?s=' + encodeURIComponent(movieTitle) + '&apikey=ff70a512')
+                .then(response => response.json())
+                .then(data => {
+                    const moviesDiv = document.getElementById("movies");
+                    moviesDiv.innerHTML = "";
+                    if (data.Response === "True") {
+                        if (data.Search && data.Search.length > 0) {
+                            data.Search.forEach(movie => {
+                                moviesDiv.innerHTML += `
+                                    <div class="movie-box">
+                                        <img src="${movie.Poster}" alt="${movie.Title} Poster"/>
+                                        <h3>${movie.Title}</h3>
+                                        <p>${movie.Year}</p>
+                                        <button onclick="GetMovieDetails('${movie.imdbID}')">More Details</button>
+                                    </div>
+                                `;
+                            });
+                        } else {
+                            moviesDiv.innerHTML = "<p>No movies found</p>";
+                        }
+                    } else {
+                        moviesDiv.innerHTML = `<p>Error: ${data.Error}</p>`;
+                    }
+                })
+                .catch(err => {
+                    console.error("Fetch error:", err);
+                    alert("Something went wrong");
+                });
+        }
+
+        function GetMovieDetails(imdbID) {
+            fetch('http://www.omdbapi.com/?i=' + imdbID + '&apikey=ff70a512')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.Response === "True") {
+                        const detailContent = document.getElementById("movieDetailContent");
+                        detailContent.innerHTML = `
+                            <img src="${data.Poster}" alt="${data.Title} Poster"/>
+                            <div>
+                                <h2>${data.Title}</h2>
+                                <p><strong>Year:</strong> ${data.Year}</p>
+                                <p><strong>Genre:</strong> ${data.Genre}</p>
+                                <p><strong>Plot:</strong> ${data.Plot}</p>
+                                <p><strong>Rating:</strong> ${data.imdbRating}</p>
+                                <p><strong>Director:</strong> ${data.Director}</p>
+                                <p><strong>Actors:</strong> ${data.Actors}</p>
+                            </div>
+                        `;
+                        const detailModal = document.getElementById("movieDetail");
+                        detailModal.classList.add("show");
+                        detailModal.classList.remove("hide");
+                    } else {
+                        alert(`Error: ${data.Error}`);
+                    }
+                })
+                .catch(err => {
+                    console.error("Fetch error:", err);
+                    alert("Something went wrong");
+                });
+        }
+
+        function closeDetail() {
+            const detailModal = document.getElementById("movieDetail");
+            detailModal.classList.add("hide");
+            detailModal.classList.remove("show");
+        }
+    </script>
+</body>
+</html>
